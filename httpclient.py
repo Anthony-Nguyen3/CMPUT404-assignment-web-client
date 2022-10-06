@@ -41,13 +41,28 @@ class HTTPClient(object):
         return None
 
     def get_code(self, data):
-        return None
+        # Get header first
+        split_data = data.split("\r\n\r\n")
+        header = split_data[0]
+
+        # get code from header
+        split_header = header.split(" ")
+
+        # code is 2nd argument, HTTP/1.1 [code] [message] ....
+        code = int(split_header[1])
+        return code
 
     def get_headers(self,data):
-        return None
+        # Body and head is spearataed by a blank line
+        split_data = data.split("\r\n\r\n")
+        header = split_data[0]
+        return header
 
     def get_body(self, data):
-        return None
+        # Body and head is spearataed by a blank line
+        split_data = data.split("\r\n\r\n")
+        body = split_data[1]
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -68,13 +83,82 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-        code = 500
-        body = ""
+        parsed_url = urllib.parse.urlparse(url)
+
+        # get the host name
+        host_name = parsed_url.hostname
+
+        # get the port number, default is 80
+        port = parsed_url.port
+        if port is None:
+            port = 80
+
+        # get the path to send request, default is  /
+        path = parsed_url.path
+        if path == '':
+            path = '/'
+            
+        # connect to socket
+        self.connect(host_name, port)
+
+         # send GET request
+        request_str = "GET " + path + " HTTP/1.1\r\nHost: " + host_name + "\r\n" + "Connection: close\r\n\r\n"
+        self.sendall(request_str)
+        
+        # get response body as a string
+        response_str = self.recvall(self.socket)
+
+        # extract HTTP code and response body
+        code = self.get_code(response_str)
+        body = self.get_body(response_str)
+
+        print(response_str)
+
+        # close connection
+        self.close()
+        
         return HTTPResponse(code, body)
 
     def POST(self, url, args=None):
-        code = 500
-        body = ""
+        parsed_url = urllib.parse.urlparse(url)
+
+        # get the host name
+        host_name = parsed_url.hostname
+
+        # get the port number, default is 80
+        port = parsed_url.port
+        if port is None:
+            port = 80
+
+        # get the path to send request, default is  /
+        path = parsed_url.path
+        if path == '':
+            path = '/'
+            
+        # connect to socket
+        self.connect(host_name, port)
+
+        # send post request body
+        request_body = ''
+        if args is not None:
+            request_body = urllib.parse.urlencode(args)
+
+        # send POST request headers
+        request_str = "POST " + path + " HTTP/1.1\r\nHost: " + host_name + "\r\n" + "Content-Type: application/x-www-form-urlencoded\r\n" + "Content-Length: " + str(len(request_body)) + "\r\n" + "Connection: close\r\n\r\n"
+        request_str += request_body
+        self.sendall(request_str)
+        
+        # get response body as a string
+        response_str = self.recvall(self.socket)
+
+        # extract HTTP code and response body
+        code = self.get_code(response_str)
+        body = self.get_body(response_str)
+
+        print(response_str)
+
+        # close connection
+        self.close()
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
