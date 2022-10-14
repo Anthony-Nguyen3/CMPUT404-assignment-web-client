@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
+# Copyright 2022 Anthony Nguyen
 # Copyright 2016 Abram Hindle, https://github.com/tywtyw2002, and https://github.com/treedust
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -144,7 +145,7 @@ class HTTPClient(object):
             request_body = urllib.parse.urlencode(args)
 
         # send POST request headers
-        request_str = "POST " + path + " HTTP/1.1\r\nHost: " + host_name + "\r\n" + "Content-Type: application/x-www-form-urlencoded\r\n" + "Content-Length: " + str(len(request_body)) + "\r\n" + "Connection: close\r\n\r\n"
+        request_str = "POST " + path + " HTTP/1.1\r\nHost: " + host_name + "\r\n" +"User-Agent: " + "httpclient/1.0" + "\r\n" + "Content-Type: application/x-www-form-urlencoded\r\n" + "Content-Length: " + str(len(request_body)) + "\r\n" + "Connection: close\r\n\r\n"
         request_str += request_body
         self.sendall(request_str)
         
